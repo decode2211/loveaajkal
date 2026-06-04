@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  displayName  String
+  timezone     String
+  city         String
+  avatarUrl    String?
+  createdAt    DateTime @default(now())
+
+  quizAnswers    QuizAnswer[]
+  preferences    Preference[]
+  missMeterLogs  MissMeterLog[]
+  watchlistItems WatchlistItem[]
+  reviews        Review[]
+  tripItems      TripItem[]
+
+  @@map("users")
+}
+
+model CountdownConfig {
+  id         String   @id @default(cuid())
+  targetDate DateTime
+  label      String
+  updatedAt  DateTime @updatedAt
+
+  @@map("countdown_configs")
+}
+
+model QuizAnswer {
+  id             String   @id @default(cuid())
+  userId         String
+  questionId     Int
+  selectedOption Int
+  answeredAt     DateTime @default(now())
+  dateKey        String
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, dateKey])
+  @@map("quiz_answers")
+}
+
+model TimelineEvent {
+  id          String   @id @default(cuid())
+  date        DateTime
+  title       String
+  description String
+  emoji       String
+  photos      Photo[]
+  order       Int
+  createdAt   DateTime @default(now())
+
+  @@map("timeline_events")
+}
+
+model Photo {
+  id              String        @id @default(cuid())
+  cloudinaryId    String
+  url             String
+  caption         String?
+  timelineEventId String
+  timelineEvent   TimelineEvent @relation(fields: [timelineEventId], references: [id], onDelete: Cascade)
+  uploadedAt      DateTime      @default(now())
+
+  @@map("photos")
+}
+
+model Preference {
+  id         String   @id @default(cuid())
+  userId     String
+  questionId Int
+  choice     Int
+  answeredAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, questionId])
+  @@map("preferences")
+}
+
+model MissMeterLog {
+  id       String   @id @default(cuid())
+  userId   String
+  level    Int
+  note     String?
+  loggedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("miss_meter_logs")
+}
+
+model WatchlistItem {
+  id        String    @id @default(cuid())
+  title     String
+  type      MediaType
+  posterUrl String?
+  addedById String
+  watched   Boolean   @default(false)
+  watchedAt DateTime?
+  priority  Int       @default(0)
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+
+  addedBy User     @relation(fields: [addedById], references: [id])
+  reviews Review[]
+
+  @@map("watchlist_items")
+}
+
+enum MediaType {
+  MOVIE
+  SHOW
+  ANIME
+  DOCUMENTARY
+}
+
+model Review {
+  id              String   @id @default(cuid())
+  watchlistItemId String
+  userId          String
+  heartRating     Int
+  comment         String?
+  createdAt       DateTime @default(now())
+
+  watchlistItem WatchlistItem @relation(fields: [watchlistItemId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id])
+
+  @@unique([watchlistItemId, userId])
+  @@map("reviews")
+}
+
+model TripItem {
+  id          String       @id @default(cuid())
+  category    TripCategory
+  title       String
+  description String?
+  date        DateTime?
+  completed   Boolean      @default(false)
+  order       Int          @default(0)
+  metadata    Json?
+  addedById   String
+  createdAt   DateTime     @default(now())
+
+  addedBy User @relation(fields: [addedById], references: [id])
+
+  @@map("trip_items")
+}
+
+enum TripCategory {
+  FLIGHT
+  LOCATION
+  AGENDA
+  PACKING
+}

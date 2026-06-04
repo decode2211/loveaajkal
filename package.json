@@ -1,0 +1,15 @@
+{
+  "name": "us-always",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "db:migrate": "pnpm --filter server prisma migrate dev",
+    "db:seed": "pnpm --filter server prisma db seed",
+    "db:studio": "pnpm --filter server prisma studio"
+  },
+  "devDependencies": {
+    "typescript": "5.4.5"
+  }
+}
