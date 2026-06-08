@@ -8,9 +8,10 @@ async function build() {
     entryPoints: [path.join(__dirname, 'src/app.ts')],
     bundle: true,
     platform: 'node',
-    target: 'ES2022',
+    target: 'node20',
     format: 'cjs',
     outfile: path.join(__dirname, 'dist/app.js'),
+    loader: { '.ts': 'ts' },
     external: [
       '@prisma/client',
       'bcryptjs',
@@ -28,6 +29,16 @@ async function build() {
       'zod',
       'prisma',
     ],
+    plugins: [
+      {
+        name: 'shared-alias',
+        setup(build) {
+          build.onResolve({ filter: /^@us-always\/shared$/ }, () => ({
+            path: path.resolve(__dirname, '../shared/src/index.ts'),
+          }));
+        },
+      },
+    ],
   });
 
   console.log('✓ Build complete');
@@ -35,5 +46,5 @@ async function build() {
 
 build().catch((err) => {
   console.error(err);
-  process.exit(1); // Removed the extra ')' here
+  process.exit(1);
 });
