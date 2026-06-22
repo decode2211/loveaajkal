@@ -1,9 +1,11 @@
 import { z } from 'zod';
-import dotenv from 'dotenv';
-import path from 'path';
 
-// Explicitly load .env from server package root
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// Only load dotenv in development (Render injects env vars directly)
+if (process.env.NODE_ENV !== 'production') {
+  const dotenv = require('dotenv');
+  const path = require('path');
+  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+}
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
