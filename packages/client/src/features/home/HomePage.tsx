@@ -2,11 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Lightbulb, ScrollText, Globe, Shuffle, Heart, Tv2, Plane, Edit3 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useForm } from 'react-hook-form';
 import api from '../../lib/api';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../auth/useAuth';
 import { PageTransition, containerVariants, itemVariants } from '../../components/layout/PageTransition';
 import { DualClockWidget } from './DualClockWidget';
 import { CountdownWidget } from './CountdownWidget';
@@ -25,17 +25,25 @@ const quickLinks = [
 ];
 
 export function HomePage() {
-  const user = useAuthStore((s) => s.user);
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const qc = useQueryClient();
   const [editCountdown, setEditCountdown] = useState(false);
 
-  const { data: config, isLoading } = useQuery<HomeConfig>({
+  const { data: config, isLoading: configLoading, error: configError } = useQuery<HomeConfig>({
     queryKey: ['home', 'config'],
     queryFn: async () => {
       const { data } = await api.get<HomeConfig>('/home/config');
       return data;
     },
+    enabled: isAuthenticated,
+    retry: false,
   });
+
+  useEffect(() => {
+    if (configError) {
+      logout();
+    }
+  }, [configError, logout]);
 
   const { register, handleSubmit } = useForm<{ targetDate: string; label: string }>();
 
@@ -51,7 +59,8 @@ export function HomePage() {
     onError: () => toast.error('Failed to update countdown'),
   });
 
-  if (isLoading || !config) return <PageSpinner />;
+  if (authLoading || configLoading) return <PageSpinner />;
+  if (!config) return <PageSpinner />;
 
   const greeting = () => {
     const h = new Date().getHours();
