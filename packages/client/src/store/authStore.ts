@@ -5,7 +5,10 @@ import { User } from '@us-always/shared';
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
-  setUser: (user: User) => void;
+  accessToken: string | null;
+  refreshToken: string | null;
+  setUser: (user: User, accessToken: string, refreshToken: string) => void;
+  setAccessToken: (token: string) => void;
   logout: () => void;
 }
 
@@ -14,12 +17,22 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isAuthenticated: false,
-      setUser: (user) => set({ user, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      accessToken: null,
+      refreshToken: null,
+      setUser: (user, accessToken, refreshToken) =>
+        set({ user, isAuthenticated: true, accessToken, refreshToken }),
+      setAccessToken: (accessToken) => set({ accessToken }),
+      logout: () =>
+        set({ user: null, isAuthenticated: false, accessToken: null, refreshToken: null }),
     }),
     {
       name: 'us-always-auth',
-      partialize: (state) => ({ user: state.user, isAuthenticated: state.isAuthenticated }),
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+      }),
     },
   ),
 );

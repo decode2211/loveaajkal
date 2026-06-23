@@ -1,11 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuthStore } from '../../store/authStore';
 import { User } from '@us-always/shared';
 
 export function useAuth() {
-  const { user, isAuthenticated, setUser, logout } = useAuthStore();
+  const { user, isAuthenticated, accessToken, setUser, logout } = useAuthStore();
 
   const { data, isLoading, error } = useQuery<User>({
     queryKey: ['auth', 'me'],
@@ -13,13 +14,17 @@ export function useAuth() {
       const { data } = await api.get<User>('/auth/me');
       return data;
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && !!accessToken,
     retry: false,
     staleTime: 1000 * 60 * 5,
   });
 
   useEffect(() => {
-    if (data) setUser(data);
+    if (data) {
+      // Keep existing tokens, just refresh user data
+      const { accessToken, refreshToken } = useAuthStore.getState();
+      setUser(data, accessToken!, refreshToken!);
+    }
   }, [data, setUser]);
 
   useEffect(() => {

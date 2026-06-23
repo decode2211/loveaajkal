@@ -12,16 +12,6 @@ function generateTokens(userId: string) {
   return { accessToken, refreshToken };
 }
 
-function setTokenCookies(res: Response, accessToken: string, refreshToken: string) {
-  const isProd = env.NODE_ENV === 'production';
-  res.cookie('accessToken', accessToken, {
-    httpOnly: true, secure: isProd, sameSite: 'lax', maxAge: 15 * 60 * 1000,
-  });
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true, secure: isProd, sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000,
-  });
-}
-
 export async function login(req: Request, res: Response) {
   const { username, password } = loginSchema.parse(req.body);
   const user = await prisma.user.findUnique({ where: { username } });
@@ -30,22 +20,22 @@ export async function login(req: Request, res: Response) {
     return;
   }
   const { accessToken, refreshToken } = generateTokens(user.id);
-  setTokenCookies(res, accessToken, refreshToken);
   const { passwordHash: _, ...safeUser } = user;
-  res.json({ user: safeUser, accessToken });
+  // Return tokens in body — no cookies needed
+  res.json({ user: safeUser, accessToken, refreshToken });
 }
 
 export async function refresh(req: Request, res: Response) {
-  const token = req.cookies?.refreshToken;
+  // Accept refresh token from body or Authorization header
+  const token = req.body?.refreshToken || req.headers['x-refresh-token'];
   if (!token) { res.status(401).json({ message: 'No refresh token' }); return; }
   try {
     const payload = jwt.verify(token, env.JWT_REFRESH_SECRET) as { userId: string };
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user) { res.status(401).json({ message: 'User not found' }); return; }
     const { accessToken, refreshToken } = generateTokens(user.id);
-    setTokenCookies(res, accessToken, refreshToken);
     const { passwordHash: _, ...safeUser } = user;
-    res.json({ user: safeUser, accessToken });
+    res.json({ user: safeUser, accessToken, refreshToken });
   } catch {
     res.status(401).json({ message: 'Invalid refresh token' });
   }
@@ -59,7 +49,6 @@ export async function me(req: AuthRequest, res: Response) {
 }
 
 export function logout(_req: Request, res: Response) {
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  // Client just drops the tokens — nothing to do server-side
   res.json({ message: 'Logged out' });
 }

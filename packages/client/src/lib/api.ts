@@ -3,16 +3,23 @@ import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-  withCredentials: true,
+  withCredentials: false, // no cookies needed anymore
+});
+
+// Attach access token to every request
+api.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
 let isRefreshing = false;
 let failedQueue: Array<{ resolve: (value: unknown) => void; reject: (error: unknown) => void }> = [];
 
-function processQueue(error: unknown, token: string | null = null) {
+function processQueue(error: unknown) {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) reject(error);
-    else resolve(token);
+    else resolve(null);
   });
   failedQueue = [];
 }
@@ -33,11 +40,15 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await api.post('/auth/refresh');
+        const refreshToken = useAuthStore.getState().refreshToken;
+        if (!refreshToken) throw new Error('No refresh token');
+
+        const { data } = await api.post('/auth/refresh', { refreshToken });
+        useAuthStore.getState().setUser(data.user, data.accessToken, data.refreshToken);
         processQueue(null);
         return api(originalRequest);
       } catch (refreshError) {
-        processQueue(refreshError, null);
+        processQueue(refreshError);
         useAuthStore.getState().logout();
         return Promise.reject(refreshError);
       } finally {

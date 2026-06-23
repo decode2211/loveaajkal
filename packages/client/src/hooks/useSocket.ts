@@ -7,7 +7,7 @@ export function useSocket(namespace: string = '') {
   const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
-    const socketUrl = (import.meta.env.VITE_SOCKET_URL || 'http://localhost:3001') + namespace;
+    const socketUrl = (import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:3001') + namespace;
 
     socketRef.current = io(socketUrl, {
       withCredentials: true,

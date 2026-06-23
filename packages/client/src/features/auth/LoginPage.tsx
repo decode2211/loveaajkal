@@ -29,16 +29,16 @@ export function LoginPage() {
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
 
   const onSubmit = async (data: LoginInput) => {
-    try {
-      const res = await api.post<{ user: User }>('/auth/login', data);
-      setUser(res.data.user);
-      toast.success(`Welcome back, ${res.data.user.displayName} 💛`);
-      navigate('/', { replace: true });
-    } catch (err) {
-      const message = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
-      toast.error(message || 'Invalid credentials');
-    }
-  };
+  try {
+    const res = await api.post<{ user: User; accessToken: string; refreshToken: string }>('/auth/login', data);
+    setUser(res.data.user, res.data.accessToken, res.data.refreshToken);
+    toast.success(`Welcome back, ${res.data.user.displayName} 💛`);
+    navigate('/', { replace: true });
+  } catch (err) {
+    const message = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+    toast.error(message || 'Invalid credentials');
+  }
+};
 
   return (
     <div className="min-h-screen bg-bg-base flex items-center justify-center relative overflow-hidden">
