@@ -122,8 +122,8 @@ Both accounts use password: `password123`
 
 | Person | Username | Display Name |
 |---|---|---|
-| Person 1 | `person1` | Arjun |
-| Person 2 | `person2` | Priya |
+| Person 1 | `person1` | Dev |
+| Person 2 | `person2` | Yashika |
 
 > ⚠️ **Change these passwords** in `packages/server/prisma/seed.ts` before running for real use.
 
