@@ -3,7 +3,13 @@ import { useAuthStore } from '../store/authStore';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api/v1',
-  withCredentials: false, // no cookies needed anymore
+  withCredentials: false,
+});
+
+// Separate instance for refresh — no interceptors, no auth header
+const refreshApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || '/api/v1',
+  withCredentials: false,
 });
 
 // Attach access token to every request
@@ -43,7 +49,8 @@ api.interceptors.response.use(
         const refreshToken = useAuthStore.getState().refreshToken;
         if (!refreshToken) throw new Error('No refresh token');
 
-        const { data } = await api.post('/auth/refresh', { refreshToken });
+        // Use refreshApi — bypasses the auth interceptor entirely
+        const { data } = await refreshApi.post('/auth/refresh', { refreshToken });
         useAuthStore.getState().setUser(data.user, data.accessToken, data.refreshToken);
         processQueue(null);
         return api(originalRequest);
