@@ -9,7 +9,7 @@ import { ComparisonEngine } from './ComparisonEngine';
 
 // Hardcoded coordinates — update these via .env or settings in production
 const PERSON1 = { lat: 16.4307, lng: 80.5525, city: 'Mangalagiri, India' };
-const PERSON2 = { lat: 40.7128, lng: -74.006, city: 'New York, USA' };
+const PERSON2 = { lat: 40.7128, lng: -74.006, city: 'Texas, USA' };
 
 export function DistancePage() {
   const { distanceUnit, setDistanceUnit } = useAppStore();

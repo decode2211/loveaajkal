@@ -9,10 +9,12 @@ const router = Router();
 router.use(authMiddleware);
 
 router.get('/', getPreferences);
-router.post('/:questionId', setPreference);
 
+// Miss-meter routes MUST come before /:questionId
 router.post('/miss-meter', logMissMeter);
 router.get('/miss-meter/latest', getLatestMissMeters);
 router.get('/miss-meter/history', getMissMeterHistory);
+
+router.post('/:questionId', setPreference);
 
 export default router;

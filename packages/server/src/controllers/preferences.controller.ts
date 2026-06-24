@@ -39,7 +39,7 @@ export async function setPreference(req: AuthRequest, res: Response) {
 
 export async function logMissMeter(req: AuthRequest, res: Response) {
   const { level, note } = z.object({
-    level: z.number().int().min(1).max(100),
+    level: z.number().int().min(0).max(100).transform(Math.round),
     note: z.string().max(500).optional(),
   }).parse(req.body);
 
